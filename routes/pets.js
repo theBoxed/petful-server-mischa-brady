@@ -1,88 +1,51 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-
-
-let pets = {
-  dogs:[{
-    imageURL:
-      'http://www.dogster.com/wp-content/uploads/2015/05/Cute%20dog%20listening%20to%20music%201_1.jpg',
-    imageDescription:
-      'A smiling golden-brown golden retreiver listening to music.',
-    name: 'Zeus',
-    sex: 'Male',
-    age: 3,
-    breed: 'Golden Retriever',
-    story: 'Owner Passed away'
-  },
-  {
-    imageURL:
-      'http://www.dogster.com/wp-content/uploads/2015/05/Cute%20dog%20listening%20to%20music%201_1.jpg',
-    imageDescription:
-        'A smiling golden-brown golden retreiver listening to music.',
-    name: 'Chance',
-    sex: 'Male',
-    age: 3,
-    breed: 'Ridgeback',
-    story: 'Owner Ran away'
-  }
-  ],
-  cats: [{
-    imageURL:
-      'https://assets3.thrillist.com/v1/image/2622128/size/tmg-slideshow_l.jpg',
-    imageDescription:
-      'Orange bengal cat with black stripes lounging on concrete.',
-    name: 'Fluffy',
-    sex: 'Female',
-    age: 2,
-    breed: 'Bengal',
-    story: 'Thrown on the street'
-  },
-  {
-    imageURL:
-        'https://assets3.thrillist.com/v1/image/2622128/size/tmg-slideshow_l.jpg',
-    imageDescription:
-        'Orange bengal cat with black stripes lounging on concrete.',
-    name: 'Spikey',
-    sex: 'Female',
-    age: 2,
-    breed: 'Bengal',
-    story: 'Thrown on the street'
-  },
-  {
-    imageURL:
-        'https://assets3.thrillist.com/v1/image/2622128/size/tmg-slideshow_l.jpg',
-    imageDescription:
-        'Orange bengal cat with black stripes lounging on concrete.',
-    name: 'Fluffster',
-    sex: 'Female',
-    age: 2,
-    breed: 'Bengal',
-    story: 'Thrown on the street'
-  }, {
-    imageURL:
-        'https://assets3.thrillist.com/v1/image/2622128/size/tmg-slideshow_l.jpg',
-    imageDescription:
-        'Orange bengal cat with black stripes lounging on concrete.',
-    name: 'Fluffster',
-    sex: 'Female',
-    age: 2,
-    breed: 'Bengal',
-    story: 'Thrown on the street'
-  }] 
-};
+const dogs = require('../queues/dogs');
+const cats = require('../queues/cats');
 
 /* ================ GET ================ */
 
 router.get('/pets/:pets', (req, res, next) => {
   let petType = req.params.pets;
-  res.send(pets[petType][0]);
+  if(petType === 'cats') {
+    res.json(cats.peek());
+  } else if(petType === 'dogs') {
+    res.json(dogs.peek());
+  } else {
+    const err = new Error('Sorry, cats and dogs only! Check back soon for my animals!');
+    err.status = 404;
+    next(err);
+    
+  }
 });
 
 router.delete('/pets/:pets', (req, res, next) => {
   let petType = req.params.pets;
-  pets[petType].shift();
-  res.sendStatus(204);
-} );
+  let err;
+  if (petType === 'cats') {
+    if(cats.peek()){
+      cats.dequeue();
+      res.sendStatus(204);
+    } else {
+      err = new Error('Sorry, we currently have no cats up for adoption');
+      err.status = 404;
+      next(err);
+    }
+  } else if (petType === 'dogs') {
+    if (dogs.peek()) {
+      dogs.dequeue();
+      res.sendStatus(204);
+    } else {
+      err = new Error('Sorry, we currently have no dogs up for adoption');
+      err.status = 404;
+      next(err);
+    }
+  } else {
+    err = new Error('Sorry, cats and dogs only! Check back soon for my animals!');
+    err.status = 404;
+    next(err);
+  }
+});
 
 module.exports = router;
